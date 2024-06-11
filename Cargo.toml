@@ -2,9 +2,19 @@
 name = "Famine"
 version = "0.1.0"
 edition = "2021"
-build="build.rs"
+build = "build.rs"
+
+[lib]
+name = "famine"
+crate-type = ["rlib"]
+path = "libfamine/lib.rs"
+
+[[bin]]
+name = "demo"
+path = "src/main.rs"
 
 [build-dependencies]
 cmake = "0.1"
 
 [dependencies]
+libc = "0.2.0"
