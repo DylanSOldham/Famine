@@ -1,0 +1,12 @@
+[package]
+name = "famine-desktop"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+cmake = "0.1"
+
+[dependencies]
+libc = "0.2.0"
+famine_application = { path = "../" }
+famine = { path = "../famine" }

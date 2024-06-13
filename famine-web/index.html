@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Famine Engine</title>
+        <link rel="stylesheet" href="index.css" />
+    </head>
+    <body>
+        <canvas></canvas>
+        <script type="module">
+            import init, {web_startup, web_update} from "./pkg/famine_web.js"
+
+            let window
+
+            const update = () => {
+                web_update(window)
+                setTimeout(() => {
+                    update()
+                }, 33)
+            }
+
+            init().then(() => {
+                window = web_startup()
+                update()
+            })
+        </script>
+    </body>
+</html>

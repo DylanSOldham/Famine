@@ -1,0 +1,9 @@
+[package]
+name = "famine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "famine"
+path = "lib.rs"
+crate-type = ["rlib"]

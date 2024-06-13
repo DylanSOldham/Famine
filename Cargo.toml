@@ -1,20 +1,18 @@
+[workspace]
+members = [
+    "famine-desktop",
+    "famine-web",
+]
+
 [package]
-name = "Famine"
+name = "famine_application"
 version = "0.1.0"
 edition = "2021"
-build = "build.rs"
 
 [lib]
-name = "famine"
+name = "famine_application"
+path = "./src/app.rs"
 crate-type = ["rlib"]
-path = "libfamine/lib.rs"
-
-[[bin]]
-name = "demo"
-path = "src/main.rs"
-
-[build-dependencies]
-cmake = "0.1"
 
 [dependencies]
-libc = "0.2.0"
+famine = { path = "famine" }

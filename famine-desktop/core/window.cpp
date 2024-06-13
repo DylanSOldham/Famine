@@ -19,7 +19,6 @@ void error_callback(int code, const char* description)
     std::cerr << "GLFW Error: " << description << "\n";
 }
 
-
 extern "C"
 {
     WindowImpl* window_create(const char* title, size_t width, size_t height) 
@@ -48,6 +47,8 @@ extern "C"
             return nullptr;
         }
 
+        glfwSwapInterval(1);
+
         WindowImpl* p = new WindowImpl(glfw_window);
         return p;
     }
@@ -64,5 +65,17 @@ extern "C"
     bool window_should_close(WindowImpl* window)
     {
         return glfwWindowShouldClose(window->glfw_window);
+    }
+
+    void window_clear(WindowImpl* window, float r, float g, float b, float a)
+    {
+        glClearColor(r, g, b, a);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    void window_process(WindowImpl* window)
+    {
+        glfwSwapBuffers(window->glfw_window);
+        glfwPollEvents();
     }
 }
