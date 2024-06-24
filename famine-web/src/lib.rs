@@ -66,13 +66,8 @@ impl WindowType for WebWindow {
 
         let canvas: HtmlCanvasElement = document.query_selector("canvas").expect("Failed to find a canvas!")
             .unwrap().dyn_into::<web_sys::HtmlCanvasElement>().expect("Failed to cast element as a canvas!");
-
-        console::log_1(&format!("DA{}", canvas.width()).into());
-
         canvas.set_width((canvas.client_width() as f64 * window.device_pixel_ratio()) as u32);
         canvas.set_height((canvas.client_height() as f64 * window.device_pixel_ratio()) as u32);
-        
-        console::log_1(&format!("{}", canvas.width()).into());
 
         let gl: WebGl2RenderingContext = canvas.get_context("webgl2")
             .expect("Failed to get rendering context!").unwrap()
