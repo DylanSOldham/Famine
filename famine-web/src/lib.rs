@@ -1,14 +1,65 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{HtmlCanvasElement, WebGl2RenderingContext};
-use famine::Window;
+use std::{alloc::{alloc, dealloc, Layout}, ptr};
 
+use famine_application::App;
+use wasm_bindgen::prelude::*;
+use web_sys::{console, js_sys, HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram, WebGlShader};
+use famine::{Application, Mesh, WindowType};
 
 #[wasm_bindgen]
 pub struct WebWindow {
     gl: web_sys::WebGl2RenderingContext,
 }
 
-impl Window for WebWindow {
+pub struct WebShader {
+    program: WebGlProgram,
+}
+
+fn compile_shader(context: &WebGl2RenderingContext, shader_type: u32, source: &str) -> WebGlShader {
+    let shader = context
+        .create_shader(shader_type)
+        .expect("Failed to create shader.");
+    context.shader_source(&shader, source);
+    context.compile_shader(&shader);
+
+    if !context
+        .get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS)
+        .as_bool()
+        .unwrap_or(false)
+    {
+        console::log_1(&"Failed to compile shader.".into())
+    }
+
+    shader
+}
+
+pub fn link_program(context: &WebGl2RenderingContext, vert_shader: &WebGlShader, frag_shader: &WebGlShader) -> WebGlProgram {
+    let program = match context.create_program() {
+        Some(p) => p,
+        None => {
+            console::log_1(&"Unable to create shader program".into());
+            panic!("");
+        }
+    };
+
+    context.attach_shader(&program, vert_shader);
+    context.attach_shader(&program, frag_shader);
+    context.link_program(&program);
+
+    if !context
+        .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
+        .as_bool()
+        .unwrap_or(false)
+    {
+        let error_msg = context.get_program_info_log(&program).unwrap_or_else(|| "Unkown error".into()); 
+        console::log_1(&format!("Error creating shader program: {}", error_msg).into());
+    }
+
+    program
+}
+
+impl WindowType for WebWindow {
+    type Shader = WebShader;
+
     fn new(title: &str, _width: usize, _height: usize) -> WebWindow {
         let window: web_sys::Window = web_sys::window().expect("Failed to get global window!");
         let document: web_sys::Document = window.document().expect("Failed to get the document!");
@@ -17,6 +68,7 @@ impl Window for WebWindow {
         let gl: WebGl2RenderingContext = canvas.get_context("webgl2")
             .expect("Failed to get rendering context!").unwrap()
             .dyn_into::<WebGl2RenderingContext>().expect("Failed to cast rendering context!");
+
 
         document.set_title(title);
 
@@ -27,14 +79,51 @@ impl Window for WebWindow {
         self.gl.clear_color(r * 255.0, g * 255.0, b * 255.0, a * 255.0);
         self.gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
     }
+
+    fn draw_mesh(&self, mesh: &Mesh) {
+        let data = unsafe { js_sys::Float32Array::view(&mesh.vertices.as_slice()) };
+        self.gl.buffer_data_with_array_buffer_view(WebGl2RenderingContext::ARRAY_BUFFER, &data, WebGl2RenderingContext::STATIC_DRAW);
+        self.gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, mesh.vertices.len() as i32);
+    }
+
+    fn new_shader(&self, vert_src: &str, frag_src: &str) -> Self::Shader {
+        let vert_shader = compile_shader(&self.gl, WebGl2RenderingContext::VERTEX_SHADER, vert_src);
+        let frag_shader = compile_shader(&self.gl, WebGl2RenderingContext::FRAGMENT_SHADER, frag_src);
+        let program = link_program(&self.gl, &vert_shader, &frag_shader);
+
+        WebShader {
+            program
+        }
+    }
+
+    fn use_shader(&self, shader: &Self::Shader) {
+        self.gl.use_program(Some(&shader.program));
+    }
 }
 
 #[wasm_bindgen]
-pub fn web_update(window: &WebWindow) {
-    famine_application::update(window)
+pub fn web_startup() -> *mut App<WebWindow> { 
+    let layout = Layout::new::<App<WebWindow>>();
+    let app_ptr = unsafe { alloc(layout) as *mut App<WebWindow> };
+
+    if app_ptr.is_null() {
+        console::log_1(&"Failed to allocate memory for the applicaiton.".into());
+        return ptr::null_mut();
+    }
+    
+    unsafe { ptr::write(app_ptr, App::<WebWindow>::new()) }
+    
+    console::log_1(&"Successful application startup.".into());
+
+    app_ptr
 }
 
 #[wasm_bindgen]
-pub fn web_startup() -> WebWindow {
-    famine_application::startup::<WebWindow>()
+pub fn web_update(application: *mut App<WebWindow>) {
+    unsafe { &*application }.update();
+}
+
+#[wasm_bindgen]
+pub fn web_shutdown(application: *mut App<WebWindow>) {
+    unsafe { dealloc(application as *mut u8, Layout::new::<App<WebWindow>>()) }
 }

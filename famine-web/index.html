@@ -9,17 +9,17 @@
         <script type="module">
             import init, {web_startup, web_update} from "./pkg/famine_web.js"
 
-            let window
+            let application
 
             const update = () => {
-                web_update(window)
+                web_update(application)
                 setTimeout(() => {
                     update()
                 }, 33)
             }
 
             init().then(() => {
-                window = web_startup()
+                application = web_startup()
                 update()
             })
         </script>

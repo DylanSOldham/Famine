@@ -78,4 +78,9 @@ extern "C"
         glfwSwapBuffers(window->glfw_window);
         glfwPollEvents();
     }
+
+    void window_draw_mesh(WindowImpl* window, Mesh* mesh)
+    {
+        
+    }
 }
