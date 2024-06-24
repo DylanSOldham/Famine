@@ -63,27 +63,44 @@ impl WindowType for WebWindow {
     fn new(title: &str, _width: usize, _height: usize) -> WebWindow {
         let window: web_sys::Window = web_sys::window().expect("Failed to get global window!");
         let document: web_sys::Document = window.document().expect("Failed to get the document!");
+
         let canvas: HtmlCanvasElement = document.query_selector("canvas").expect("Failed to find a canvas!")
             .unwrap().dyn_into::<web_sys::HtmlCanvasElement>().expect("Failed to cast element as a canvas!");
+
+        console::log_1(&format!("DA{}", canvas.width()).into());
+
+        canvas.set_width((canvas.client_width() as f64 * window.device_pixel_ratio()) as u32);
+        canvas.set_height((canvas.client_height() as f64 * window.device_pixel_ratio()) as u32);
+        
+        console::log_1(&format!("{}", canvas.width()).into());
+
         let gl: WebGl2RenderingContext = canvas.get_context("webgl2")
             .expect("Failed to get rendering context!").unwrap()
             .dyn_into::<WebGl2RenderingContext>().expect("Failed to cast rendering context!");
 
-
         document.set_title(title);
+
+        let buffer = match gl.create_buffer() {
+            Some(b) => b,
+            None => {
+                console::log_1(&"Failed to create buffer".into());
+                panic!()
+            },
+        };
+        gl.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
 
         WebWindow { gl }
     }
 
     fn clear(&self, r: f32, g: f32, b: f32, a: f32) {
-        self.gl.clear_color(r * 255.0, g * 255.0, b * 255.0, a * 255.0);
+        self.gl.clear_color(r, g, b, a);
         self.gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
     }
 
     fn draw_mesh(&self, mesh: &Mesh) {
         let data = unsafe { js_sys::Float32Array::view(&mesh.vertices.as_slice()) };
         self.gl.buffer_data_with_array_buffer_view(WebGl2RenderingContext::ARRAY_BUFFER, &data, WebGl2RenderingContext::STATIC_DRAW);
-        self.gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, mesh.vertices.len() as i32);
+        self.gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, (mesh.vertices.len() / 3) as i32);
     }
 
     fn new_shader(&self, vert_src: &str, frag_src: &str) -> Self::Shader {
@@ -98,6 +115,19 @@ impl WindowType for WebWindow {
 
     fn use_shader(&self, shader: &Self::Shader) {
         self.gl.use_program(Some(&shader.program));
+
+        let vao = match self.gl.create_vertex_array() {
+            Some(va) => va,
+            None => {
+                console::log_1(&"Failed to create vao".into());
+                panic!()
+            }
+        };
+        let position_attribute_location: u32 = self.gl.get_attrib_location(&shader.program, "position") as u32;
+        self.gl.bind_vertex_array(Some(&vao));
+        self.gl.vertex_attrib_pointer_with_i32(position_attribute_location, 3,
+             WebGl2RenderingContext::FLOAT, false, 0, 0);
+        self.gl.enable_vertex_attrib_array(position_attribute_location);
     }
 }
 
