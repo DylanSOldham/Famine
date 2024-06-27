@@ -10,17 +10,9 @@
             import init, {web_startup, web_update} from "./pkg/famine_web.js"
 
             let application
-
-            const update = () => {
-                web_update(application)
-                setTimeout(() => {
-                    update()
-                }, 33)
-            }
-
             init().then(() => {
                 application = web_startup()
-                update()
+                setInterval(web_update, 33, application)
             })
         </script>
     </body>

@@ -2,7 +2,7 @@ use std::{alloc::{alloc, dealloc, Layout}, ptr};
 
 use famine_application::App;
 use wasm_bindgen::prelude::*;
-use web_sys::{console, js_sys, HtmlCanvasElement, WebGl2RenderingContext, WebGlProgram, WebGlShader};
+use web_sys::{console, js_sys, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlProgram, WebGlShader, WebGlTexture};
 use famine::{Application, Mesh, WindowType};
 
 #[wasm_bindgen]
@@ -12,6 +12,12 @@ pub struct WebWindow {
 
 pub struct WebShader {
     program: WebGlProgram,
+}
+
+pub struct WebTexture {
+    pub image: HtmlImageElement,
+    pub gl_texture: WebGlTexture,
+    pub configured: bool,
 }
 
 fn compile_shader(context: &WebGl2RenderingContext, shader_type: u32, source: &str) -> WebGlShader {
@@ -59,6 +65,7 @@ pub fn link_program(context: &WebGl2RenderingContext, vert_shader: &WebGlShader,
 
 impl WindowType for WebWindow {
     type Shader = WebShader;
+    type Texture = WebTexture;
 
     fn new(title: &str, _width: usize, _height: usize) -> WebWindow {
         let window: web_sys::Window = web_sys::window().expect("Failed to get global window!");
@@ -95,7 +102,7 @@ impl WindowType for WebWindow {
     fn draw_mesh(&self, mesh: &Mesh) {
         let data = unsafe { js_sys::Float32Array::view(&mesh.vertices.as_slice()) };
         self.gl.buffer_data_with_array_buffer_view(WebGl2RenderingContext::ARRAY_BUFFER, &data, WebGl2RenderingContext::STATIC_DRAW);
-        self.gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, (mesh.vertices.len() / 3) as i32);
+        self.gl.draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, (mesh.vertices.len() / 5) as i32);
     }
 
     fn new_shader(&self, vert_src: &str, frag_src: &str) -> Self::Shader {
@@ -104,7 +111,7 @@ impl WindowType for WebWindow {
         let program = link_program(&self.gl, &vert_shader, &frag_shader);
 
         WebShader {
-            program
+            program,
         }
     }
 
@@ -118,16 +125,56 @@ impl WindowType for WebWindow {
                 panic!()
             }
         };
-        let position_attribute_location: u32 = self.gl.get_attrib_location(&shader.program, "position") as u32;
+        let position_attribute_location: u32 = self.gl.get_attrib_location(&shader.program, "v_position") as u32;
+        let uv_attribute_location: u32 = self.gl.get_attrib_location(&shader.program, "v_uv") as u32;
         self.gl.bind_vertex_array(Some(&vao));
         self.gl.vertex_attrib_pointer_with_i32(position_attribute_location, 3,
-             WebGl2RenderingContext::FLOAT, false, 0, 0);
+             WebGl2RenderingContext::FLOAT, false, 20, 0);
+        self.gl.vertex_attrib_pointer_with_i32(uv_attribute_location, 2,
+            WebGl2RenderingContext::FLOAT, false, 20, 12);
         self.gl.enable_vertex_attrib_array(position_attribute_location);
+        self.gl.enable_vertex_attrib_array(uv_attribute_location);
+    }
+
+    fn new_texture(&self, name: &str) -> Self::Texture {
+        let image = HtmlImageElement::new().unwrap();
+        image.set_src(format!("pkg/assets/{}.png", name).as_str());
+        let gl_texture: WebGlTexture = match self.gl.create_texture() {
+            None => {
+                console::log_1(&"Failed to create texture".into());
+                panic!()
+            }
+            Some(t) => t
+        };
+
+        WebTexture {
+            image,
+            gl_texture,
+            configured: false,
+        }
+    }
+
+    fn use_texture(&self, texture: &mut Self::Texture) {
+        if !texture.image.complete() {
+            return
+        }
+
+        self.gl.active_texture(WebGl2RenderingContext::TEXTURE0);
+        self.gl.bind_texture(WebGl2RenderingContext::TEXTURE_2D, Some(&texture.gl_texture));
+        if !texture.configured {
+            self.gl.tex_image_2d_with_u32_and_u32_and_html_image_element(
+                WebGl2RenderingContext::TEXTURE_2D, 0, 
+                WebGl2RenderingContext::RGBA as i32, WebGl2RenderingContext::RGBA,
+                WebGl2RenderingContext::UNSIGNED_BYTE, &texture.image
+            ).unwrap();
+            self.gl.generate_mipmap(WebGl2RenderingContext::TEXTURE_2D);
+            texture.configured = true;
+        }
     }
 }
 
 #[wasm_bindgen]
-pub fn web_startup() -> *mut App<WebWindow> { 
+pub fn web_startup() -> *mut App<WebWindow> {
     let layout = Layout::new::<App<WebWindow>>();
     let app_ptr = unsafe { alloc(layout) as *mut App<WebWindow> };
 
@@ -145,7 +192,7 @@ pub fn web_startup() -> *mut App<WebWindow> {
 
 #[wasm_bindgen]
 pub fn web_update(application: *mut App<WebWindow>) {
-    unsafe { &*application }.update();
+    unsafe { &mut *application }.update();
 }
 
 #[wasm_bindgen]

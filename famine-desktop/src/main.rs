@@ -9,7 +9,7 @@ extern "C" {
     fn window_clear(window: *const libc::c_void, r: libc::c_float, g: libc::c_float, b: libc::c_float, a: libc::c_float);
     fn window_process(window: *const libc::c_void);
     fn window_draw_mesh(window: *const libc::c_void, vertices: *const libc::c_float);
-    // fn window_use_shader(window: *const libc::c_void);
+    fn window_use_shader(window: *const libc::c_void);
 }
 
 #[repr(C)]
