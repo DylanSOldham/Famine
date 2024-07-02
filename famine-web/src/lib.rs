@@ -14,8 +14,13 @@ pub struct WebShader {
     program: WebGlProgram,
 }
 
+pub enum TextureData {
+    ImageData(HtmlImageElement),
+    RawData(i32, i32, Vec<u8>),
+}
+
 pub struct WebTexture {
-    pub image: HtmlImageElement,
+    pub data: TextureData,
     pub gl_texture: WebGlTexture,
     pub configured: bool,
 }
@@ -136,7 +141,7 @@ impl WindowType for WebWindow {
         self.gl.enable_vertex_attrib_array(uv_attribute_location);
     }
 
-    fn new_texture(&self, name: &str) -> Self::Texture {
+    fn new_image_texture(&self, name: &str) -> Self::Texture {
         let image = HtmlImageElement::new().unwrap();
         image.set_src(format!("pkg/assets/{}.png", name).as_str());
         let gl_texture: WebGlTexture = match self.gl.create_texture() {
@@ -148,27 +153,57 @@ impl WindowType for WebWindow {
         };
 
         WebTexture {
-            image,
+            data: TextureData::ImageData(image),
             gl_texture,
             configured: false,
         }
     }
 
-    fn use_texture(&self, texture: &mut Self::Texture) {
-        if !texture.image.complete() {
-            return
+    fn new_data_texture(&self, width: i32, height: i32, data: Vec<u8>) -> Self::Texture {
+        let gl_texture: WebGlTexture = match self.gl.create_texture() {
+            None => {
+                console::log_1(&"Failed to create texture".into());
+                panic!()
+            }
+            Some(t) => t
+        };
+
+        WebTexture {
+            data: TextureData::RawData(width, height, data),
+            gl_texture,
+            configured: true,
         }
+    }
+
+    fn use_texture(&self, texture: &mut Self::Texture) {
 
         self.gl.active_texture(WebGl2RenderingContext::TEXTURE0);
         self.gl.bind_texture(WebGl2RenderingContext::TEXTURE_2D, Some(&texture.gl_texture));
-        if !texture.configured {
-            self.gl.tex_image_2d_with_u32_and_u32_and_html_image_element(
-                WebGl2RenderingContext::TEXTURE_2D, 0, 
-                WebGl2RenderingContext::RGBA as i32, WebGl2RenderingContext::RGBA,
-                WebGl2RenderingContext::UNSIGNED_BYTE, &texture.image
-            ).unwrap();
-            self.gl.generate_mipmap(WebGl2RenderingContext::TEXTURE_2D);
-            texture.configured = true;
+
+        match &texture.data {
+            TextureData::ImageData(image) => {
+                if !image.complete() {
+                    return
+                }
+                if !texture.configured {
+                    self.gl.tex_image_2d_with_u32_and_u32_and_html_image_element(
+                        WebGl2RenderingContext::TEXTURE_2D, 0, 
+                        WebGl2RenderingContext::RGBA as i32, WebGl2RenderingContext::RGBA,
+                        WebGl2RenderingContext::UNSIGNED_BYTE, &image
+                    ).unwrap();
+                    self.gl.generate_mipmap(WebGl2RenderingContext::TEXTURE_2D);
+                    texture.configured = true;
+                }
+            }
+            TextureData::RawData(width, height, data) => {
+                self.gl.tex_image_2d_with_i32_and_i32_and_i32_and_format_and_type_and_opt_u8_array(
+                    WebGl2RenderingContext::TEXTURE_2D, 0, WebGl2RenderingContext::RGBA as i32, 
+                    width + 0, height + 0, 0, WebGl2RenderingContext::RGBA, WebGl2RenderingContext::UNSIGNED_BYTE, 
+                    Some(&data)
+                ).unwrap();
+                self.gl.generate_mipmap(WebGl2RenderingContext::TEXTURE_2D);
+                texture.configured = true;
+            }
         }
     }
 }

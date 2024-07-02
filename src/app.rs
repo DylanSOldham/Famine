@@ -43,11 +43,20 @@ impl<Window: WindowType> Application<Window> for App<Window> {
 
         let window = Window::new("ZA APP", 640, 480);
         let basic_shader = window.new_shader(vert_src, frag_src);
-        let texture = window.new_texture("texture");
+        let texture = window.new_data_texture(2, 2, vec![
+            255, 0, 0, 255,   
+            0, 0, 255, 255,
+            255, 255, 0, 255,
+            0, 255, 0, 255,
+        ]);
         let mesh = Mesh::new(vec![
-            -0.5,  0.5, 0.0, 0.0, 0.0,
-             0.5,  0.5, 0.0, 1.0, 0.0,
-             0.0, -0.5, 0.0, 1.0, 1.0,
+            -0.5,   0.5, 0.0, 0.0, 1.0,
+             0.5,   0.5, 0.0, 1.0, 1.0,
+            -0.5,  -0.5, 0.0, 0.0, 0.0,
+
+             0.5,  -0.5, 0.0, 1.0, 0.0,
+            -0.5,  -0.5, 0.0, 0.0, 0.0,
+             0.5,   0.5, 0.0, 1.0, 1.0,
         ]);
 
         App {

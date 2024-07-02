@@ -16,7 +16,8 @@ pub trait WindowType {
     fn clear(&self, r: f32, g: f32, b: f32, a: f32);
     fn new_shader(&self, vert_src: &str, frag_str: &str) -> Self::Shader;
     fn use_shader(&self, shader: &Self::Shader);
-    fn new_texture(&self, name: &str) -> Self::Texture;
+    fn new_image_texture(&self, name: &str) -> Self::Texture;
+    fn new_data_texture(&self, width: i32, height: i32, data: Vec<u8>) -> Self::Texture;
     fn use_texture(&self, texture: &mut Self::Texture);
     fn draw_mesh(&self, mesh: &Mesh);
 }
