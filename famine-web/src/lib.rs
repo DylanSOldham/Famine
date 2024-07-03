@@ -176,7 +176,6 @@ impl WindowType for WebWindow {
     }
 
     fn use_texture(&self, texture: &mut Self::Texture) {
-
         self.gl.active_texture(WebGl2RenderingContext::TEXTURE0);
         self.gl.bind_texture(WebGl2RenderingContext::TEXTURE_2D, Some(&texture.gl_texture));
 

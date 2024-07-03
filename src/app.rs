@@ -19,10 +19,12 @@ impl<Window: WindowType> Application<Window> for App<Window> {
             in vec2 v_uv;
 
             out vec2 f_uv;
+            out vec3 f_pos;
         
             void main() {
                 gl_Position = v_position;
                 f_uv = v_uv;
+                f_pos = v_position.xyz;
             }
             "##;
         
@@ -33,6 +35,7 @@ impl<Window: WindowType> Application<Window> for App<Window> {
             uniform sampler2D uTexture;
 
             in vec2 f_uv;
+            in vec3 f_pos;
         
             out vec4 outColor;
             
@@ -43,21 +46,20 @@ impl<Window: WindowType> Application<Window> for App<Window> {
 
         let window = Window::new("ZA APP", 640, 480);
         let basic_shader = window.new_shader(vert_src, frag_src);
-        let texture = window.new_data_texture(2, 2, vec![
-            255, 0, 0, 255,   
+        
+        let texture = window.new_data_texture(3, 3, vec![
+            255, 0, 0, 255,
             0, 0, 255, 255,
+            255, 0, 0, 255,
+            0, 255, 0, 255,
             255, 255, 0, 255,
             0, 255, 0, 255,
+            255, 0, 0, 255,
+            0, 0, 255, 255,
+            255, 0, 0, 255
         ]);
-        let mesh = Mesh::new(vec![
-            -0.5,   0.5, 0.0, 0.0, 1.0,
-             0.5,   0.5, 0.0, 1.0, 1.0,
-            -0.5,  -0.5, 0.0, 0.0, 0.0,
-
-             0.5,  -0.5, 0.0, 1.0, 0.0,
-            -0.5,  -0.5, 0.0, 0.0, 0.0,
-             0.5,   0.5, 0.0, 1.0, 1.0,
-        ]);
+        
+        let mesh = Mesh::sphere(0.5, 20, 15).unwrap();
 
         App {
             window,
