@@ -25,12 +25,12 @@ impl Mat4 {
         ]}
     }
 
-    pub fn scale(factor: f32) -> Self {
+    pub fn scale(xfactor: f32, yfactor: f32, zfactor: f32) -> Self {
         Mat4 { data: [
-            factor, 0., 0., 0.,
-            0., factor, 0., 0.,
-            0., 0., factor, 0.,
-            0., 0., 0., factor
+            xfactor, 0., 0., 0.,
+            0., yfactor, 0., 0.,
+            0., 0., zfactor, 0.,
+            0., 0., 0., 1.0,
         ]}
     }
 

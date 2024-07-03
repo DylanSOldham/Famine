@@ -76,6 +76,11 @@ pub trait WindowType {
     fn new_data_texture(&self, width: i32, height: i32, data: Vec<u8>) -> Self::Texture;
     fn use_texture(&self, texture: &mut Self::Texture);
     fn draw_mesh(&self, mesh: &Mesh);
+
+    fn width(&self) -> i32;
+    fn height(&self) -> i32;
+
+    fn log(text: &str);
 }
 
 pub trait Application<Window: WindowType> {

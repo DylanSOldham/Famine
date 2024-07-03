@@ -213,6 +213,18 @@ impl WindowType for WebWindow {
             }
         }
     }
+
+    fn width(&self) -> i32 {
+        self.gl.drawing_buffer_width()
+    }
+
+    fn height(&self) -> i32 {
+        self.gl.drawing_buffer_height()
+    }
+
+    fn log(text: &str) {
+        console::log_1(&text.into());
+    }
 }
 
 #[wasm_bindgen]
