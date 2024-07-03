@@ -1,5 +1,5 @@
 pub struct Mat4 {
-    data: [f32; 16],
+    pub data: [f32; 16],
 }
 
 impl Mat4 {
@@ -34,7 +34,7 @@ impl Mat4 {
         ]}
     }
 
-    pub fn rotateX(theta: f32) -> Self {
+    pub fn rotate_x(theta: f32) -> Self {
         Mat4 { data: [
             1., 0.,          0.,           0.,
             0., theta.cos(), -theta.sin(), 0.,
@@ -43,7 +43,7 @@ impl Mat4 {
         ]}
     }
 
-    pub fn rotateY(theta: f32) -> Self {
+    pub fn rotate_y(theta: f32) -> Self {
         Mat4 { data: [
             theta.cos(),  0., theta.sin(), 0.,
             0.,           1., 0.,          0.,
@@ -52,7 +52,7 @@ impl Mat4 {
         ]}
     }
 
-    pub fn rotateZ(theta: f32) -> Self {
+    pub fn rotate_z(theta: f32) -> Self {
         Mat4 { data: [
             theta.cos(), -theta.sin(), 0., 0.,
             theta.sin(),  theta.cos(), 0., 0.,

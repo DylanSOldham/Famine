@@ -4,6 +4,7 @@ use famine_application::App;
 use wasm_bindgen::prelude::*;
 use web_sys::{console, js_sys, HtmlCanvasElement, HtmlImageElement, WebGl2RenderingContext, WebGlProgram, WebGlShader, WebGlTexture};
 use famine::{Application, Mesh, WindowType};
+use famine::linalg::Mat4;
 
 #[wasm_bindgen]
 pub struct WebWindow {
@@ -96,6 +97,8 @@ impl WindowType for WebWindow {
         };
         gl.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&buffer));
 
+        gl.enable(WebGl2RenderingContext::CULL_FACE);
+
         WebWindow { gl }
     }
 
@@ -139,6 +142,11 @@ impl WindowType for WebWindow {
             WebGl2RenderingContext::FLOAT, false, 20, 12);
         self.gl.enable_vertex_attrib_array(position_attribute_location);
         self.gl.enable_vertex_attrib_array(uv_attribute_location);
+    }
+    
+    fn set_uniform_mat4(&self, shader: &Self::Shader, uniform_name: &str, value: &Mat4) {
+        let location = self.gl.get_uniform_location(&shader.program, uniform_name);
+        self.gl.uniform_matrix4fv_with_f32_array(location.as_ref(), false, &value.data);
     }
 
     fn new_image_texture(&self, name: &str) -> Self::Texture {

@@ -1,0 +1,3 @@
+Uniform locations - probably don't need to fetch them every use
+Matrix multiplication - can probably support in-place operations
+Delta Time
