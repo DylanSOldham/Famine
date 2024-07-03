@@ -5,5 +5,5 @@ edition = "2021"
 
 [lib]
 name = "famine"
-path = "lib.rs"
+path = "src/lib.rs"
 crate-type = ["rlib"]

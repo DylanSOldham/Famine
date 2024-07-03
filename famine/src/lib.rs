@@ -1,5 +1,7 @@
 use std::f32::consts::PI;
 
+mod linalg;
+
 pub struct Mesh {
     pub vertices: Vec<f32>
 }

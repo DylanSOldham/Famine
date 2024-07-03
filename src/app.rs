@@ -59,7 +59,7 @@ impl<Window: WindowType> Application<Window> for App<Window> {
             255, 0, 0, 255
         ]);
         
-        let mesh = Mesh::sphere(0.5, 20, 15).unwrap();
+        let mesh = Mesh::sphere(0.5, 15, 15).unwrap();
 
         App {
             window,
