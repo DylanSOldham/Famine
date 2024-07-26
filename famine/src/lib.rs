@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 use linalg::Mat4;
 
 pub mod linalg;
+pub mod numerical;
 
 pub struct Mesh {
     pub vertices: Vec<f32>
