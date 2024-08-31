@@ -1,3 +1,13 @@
+pub struct Vec4 {
+    pub data: [f32; 4],
+}
+
+impl Vec4 {
+    pub fn new(data: [f32; 4]) -> Self {
+        Vec4 { data }
+    }
+}
+
 pub struct Mat4 {
     pub data: [f32; 16],
 }

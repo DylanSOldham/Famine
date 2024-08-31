@@ -1,5 +1,5 @@
 use std::ffi::CString;
-use famine::{Application, Mesh, WindowType};
+use famine::{Application, Mesh, ContextType};
 use famine_application::App;
 
 extern "C" {
@@ -21,7 +21,7 @@ struct DesktopShader {
 
 }
 
-impl WindowType for DesktopWindow {
+impl ContextType for DesktopWindow {
     type Shader = DesktopShader;
 
     fn new(title: &str, width: usize, height: usize) -> DesktopWindow {

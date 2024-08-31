@@ -1,8 +1,31 @@
 use std::f32::consts::PI;
-use linalg::Mat4;
+use linalg::{Mat4, Vec4};
 
 pub mod linalg;
 pub mod numerical;
+pub mod shaders;
+
+pub struct Color {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
+}
+
+impl Color {
+    pub const WHITE: Self = Color {r: 255, g: 255, b: 255, a: 255};
+
+    pub fn as_vec4(&self) -> Vec4 {
+        Vec4 {
+            data: [
+                self.r as f32 / 256.0,
+                self.g as f32 / 256.0,
+                self.b as f32 / 256.0,
+                self.a as f32 / 256.0,
+            ]
+        }
+    }
+}
 
 pub struct Mesh {
     pub vertices: Vec<f32>
@@ -64,28 +87,37 @@ impl Mesh {
     }
 }
 
-pub trait WindowType {
+pub trait ContextType {
     type Shader;
     type Texture;
 
+    // Create
     fn new(title: &str, width: usize, height: usize) -> Self;
-    fn clear(&self, r: f32, g: f32, b: f32, a: f32);
     fn new_shader(&self, vert_src: &str, frag_str: &str) -> Self::Shader;
-    fn use_shader(&self, shader: &Self::Shader);
-    fn set_uniform_mat4(&self, shader: &Self::Shader, uniform_name: &str, value: &Mat4);
-    fn new_image_texture(&self, name: &str) -> Self::Texture;
+    fn new_image_texture(&self, name: &str) -> impl std::future::Future<Output = Self::Texture>;
     fn new_data_texture(&self, width: i32, height: i32, data: Vec<u8>) -> Self::Texture;
-    fn use_texture(&self, texture: &mut Self::Texture);
-    fn draw_mesh(&self, mesh: &Mesh);
+    
+    // Setup
+    fn use_shader(&self, shader: &Self::Shader);
+    fn set_uniform_vec4(&self, shader: &Self::Shader, uniform_name: &str, value: &Vec4);
+    fn set_uniform_mat4(&self, shader: &Self::Shader, uniform_name: &str, value: &Mat4);
+    fn set_font_texture(&mut self, texture: Self::Texture);
+    fn use_texture(&self, texture: &Self::Texture);
 
-    fn width(&self) -> i32;
-    fn height(&self) -> i32;
+    // Execute
+    fn clear(&self, r: f32, g: f32, b: f32, a: f32);
+    fn draw_mesh(&self, mesh: &Mesh);
+    fn draw_text(&self, text: &str, x: f32, y: f32, width: f32, height: f32, color: Color);
+
+    // Read
+    fn display_width(&self) -> i32;
+    fn display_height(&self) -> i32;
 
     fn log(text: &str);
 }
 
-pub trait Application<Window: WindowType> {
-    fn new() -> Self;
-    fn update(&mut self);
-    fn get_window(&self) -> &Window;
+pub trait Application<Context: ContextType> {
+    fn new() -> impl std::future::Future<Output = Self>;
+    fn update(&mut self) -> impl std::future::Future<Output = ()>;
+    fn get_window(&self) -> &Context;
 }
